@@ -27,6 +27,7 @@ var color = {
 }
 var mouseDown;
 var c = cv.canvas;
+var otherC = $(c).Touchable();
 var ctx = c.getContext("2d");
 var elm = {
   brushsize: document.getElementById('brushSize'),
@@ -61,25 +62,7 @@ c.addEventListener('mousedown', function() {mouseDown=true;});
 c.addEventListener('mouseup', function() {mouseDown=false;});
 $(document).on('keypress', function(e) {getKeyPressed(e);});
 c.addEventListener('wheel', mouseWheel);
-
-  c.addEventListener("touchstart", function (event) {
-    if (event.targetTouches.length > 1) return; //touch with only 1 finger
-
-      mouseDown = true;
-
-    event.preventDefault();
-  });
-
-  c.addEventListener("touchmove", function (event) {
-    touchMove(event);
-    event.preventDefault();
-  });
-
-  c.addEventListener("touchend", function (event) {
-    if (event.targetTouches.length > 0) return; //touch with only 1 finger
-
-    mouseDown = false;
-  });
+otherC.bind('touchmove', mouseMove);
 function getMousePos(canvas, evt) {
   var rect = c.getBoundingClientRect();
   return {
