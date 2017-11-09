@@ -1,6 +1,6 @@
 canvas {
   border: 1px solid #d3d3d3;
-  background-color: #f1f1f1;
+  background-color: black;
   padding: 0px;
   margin: 0px;
   position: absolute;
@@ -27,14 +27,14 @@ canvas {
   border: 1px solid #888;
   width: 80%;
 }
-.close {
+#close {
   color: #aaaaaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
 }
-.close:hover,
-.close:focus {
+#close:hover,
+#close:focus {
   color: #000;
   text-decoration: none;
   cursor: pointer;

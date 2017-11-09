@@ -21,28 +21,25 @@ var mousePos = {
   y:0
 };
 var color = {
-  r: 0,
-  g: 0,
-  b: 0
+  r: 255,
+  g: 255,
+  b: 255
 }
 var mouseDown;
 var c = cv.canvas;
 var ctx = c.getContext("2d");
-var elm = {
-  brushsize: document.getElementById('brushSize'),
-  color: document.getElementById('color')
-};
 var span = $(".close");
 
 //FIREBASE INIT
 var config = {
-  apiKey: "AIzaSyAEkGP-cMQYQ0Vus6UC6KNQebzhduLieQo",
-  authDomain: "odraw-dynamic.firebaseapp.com",
-  databaseURL: "https://odraw-dynamic.firebaseio.com",
-  storageBucket: "odraw-dynamic.appspot.com",
-  messagingSenderId: "248622176221"
-};
-firebase.initializeApp(config);
+    apiKey: "AIzaSyCb9Nxkj52W_mNVnZKY_18QlGerxbs0Ogc",
+    authDomain: "odraw-x.firebaseapp.com",
+    databaseURL: "https://odraw-x.firebaseio.com",
+    projectId: "odraw-x",
+    storageBucket: "odraw-x.appspot.com",
+    messagingSenderId: "885108201960"
+  };
+  firebase.initializeApp(config);
 var database = firebase.database();
 var dblink = 'drawing/'+getUrlVars()["id"];
 var drawingRef = firebase.database().ref(dblink);
@@ -60,7 +57,8 @@ $(c).on('mousemove', mouseMove);
 c.addEventListener('mousedown', function() {mouseDown = true;});
 c.addEventListener('mouseup', function() {mouseDown=false;});
 $(document).on('keypress', function(e) {getKeyPressed(e);});
-c.addEventListener('wheel', mouseWheel);
+document.addEventListener('wheel', mouseWheel);
+
 function getMousePos(canvas, evt) {
   var rect = c.getBoundingClientRect();
   return {
@@ -76,6 +74,7 @@ function mouseMove(evt) {
   mousePos = getMousePos(c, evt);
   anyMove();
 }
+
 function anyMove() {
   if(mouseDown) {
     var line = {
@@ -91,6 +90,7 @@ function anyMove() {
     writeLines(line);
   }
 }
+
 function getKeyPressed(event) {
   var keynum;
   if(window.event) {
@@ -114,7 +114,7 @@ function getKeyPressed(event) {
   } else if (key == "e") {
     color.b-=10;
   }
-  $(elm).css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
+  $("#color").css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
   if(key == "h") {
     modal("switch");
   }
@@ -129,7 +129,7 @@ function mouseWheel(e) {
   else if (event.wheelDelta <= -120)
     size--;
   ctx.lineWidth = size;
-  elm.brushsize.innerHTML = "(Scroll With the Mouse Wheel) Brush Size: "+size;
+  $("#brushSize")[0].innerHTML = "(Scroll With the Mouse Wheel) Brush Size: "+size;
 }
 
 //DRAWING
@@ -154,12 +154,13 @@ function writeLines(line) {
 }
 
 //PAGE SCRIPTS
-$(".close").click(function() {
-  modal(false);
-});
-$("#myModal").click(function() {
-  modal(false);
-});
+$(document).ready( () => {
+  cv.render();
+  $("#close").click(function() {
+    modal(false);
+  });
+})
+
 function getUrlVars() {
   var vars = [], hash;
   var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
@@ -170,9 +171,7 @@ function getUrlVars() {
   }
   return vars;
 }
-$(document).ready(function() {
-  cv.render();
-});
+
 function modal(state) {
   var modal = $("#myModal");
   if(state == "switch") {
@@ -182,7 +181,6 @@ function modal(state) {
   } else {
     $(modal).hide();
   }
-  console.log("switch");
 }
 
 window.requestAnimFrame = (function (callback) {
@@ -195,9 +193,11 @@ window.requestAnimFrame = (function (callback) {
     window.setTimeout(callback, 1000/60);
   };
 })();
-(function drawLoop () {
-  requestAnimFrame(drawLoop);
-})();
+
+// (function drawLoop () {
+//   requestAnimFrame(drawLoop);
+// })();
+
 c.addEventListener("touchstart", function (e) {
         mousePos = getTouchPos(c, e);
   var touch = e.touches[0];
@@ -207,10 +207,12 @@ c.addEventListener("touchstart", function (e) {
   });
   c.dispatchEvent(mouseEvent);
 }, false);
+
 c.addEventListener("touchend", function (e) {
   var mouseEvent = new MouseEvent("mouseup", {});
   c.dispatchEvent(mouseEvent);
 }, false);
+
 c.addEventListener("touchmove", function (e) {
   var touch = e.touches[0];
   var mouseEvent = new MouseEvent("mousemove", {
@@ -230,19 +232,19 @@ function getTouchPos(canvasDom, touchEvent) {
 
 window.onload = function() {
   document.body.addEventListener("touchstart", function (e) {
-  if (e.target == c) {
-    e.preventDefault();
-  }
-}, false);
-document.body.addEventListener("touchend", function (e) {
-  if (e.target == c) {
-    e.preventDefault();
-  }
-}, false);
-document.body.addEventListener("touchmove", function (e) {
-  if (e.target == c) {
-    e.preventDefault();
-  }
-}, false);
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchend", function (e) {
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchmove", function (e) {
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
 }
 

@@ -1,10 +1,11 @@
 // Initialize Firebase
 var config = {
-  apiKey: "AIzaSyAEkGP-cMQYQ0Vus6UC6KNQebzhduLieQo",
-  authDomain: "odraw-dynamic.firebaseapp.com",
-  databaseURL: "https://odraw-dynamic.firebaseio.com",
-  storageBucket: "odraw-dynamic.appspot.com",
-  messagingSenderId: "248622176221"
+  apiKey: "AIzaSyCb9Nxkj52W_mNVnZKY_18QlGerxbs0Ogc",
+  authDomain: "odraw-x.firebaseapp.com",
+  databaseURL: "https://odraw-x.firebaseio.com",
+  projectId: "odraw-x",
+  storageBucket: "odraw-x.appspot.com",
+  messagingSenderId: "885108201960"
 };
 firebase.initializeApp(config);
 
@@ -14,15 +15,29 @@ var canvasList = [];
 
 $(document).ready(function() {
   $("#newDrawing").click(createDrawing);
+
+  $("#submit_code").click(() => {
+    let code = $("#passcode").val();
+    db.ref('drawing/'+code).once('value').then((snap)=>{
+      let data = snap.val();
+      if (data) {
+        location.href = "new.html?id="+id;
+        
+      } else {
+        $("body").append("Could not find that canvas!")
+      }
+    });
+  });
 });
 
+let id = Math.floor(Math.random()*10000);
+console.log(id);
 function createDrawing() {
-  var newDrawingRef = drawingRef.push({
+  var newDrawingRef = db.ref('drawing/'+id).set({
     test: 1
   });
-  var drawId = newDrawingRef.key;
 
-  location.href = "new.html?id="+drawId;
+  location.href = "new.html?id="+id;
 }
 function getUrlVars() {
   var vars = [], hash;
@@ -34,12 +49,16 @@ function getUrlVars() {
   }
   return vars;
 }
-drawingRef.once('value').then((snap) => {
-  let data = snap.val();
-  var keys = Object.keys(data);
-  for(var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    console.log(key);
-    $("table").append('<tr><td><a href="new.html?id='+key+'">'+key+'</a></td></tr>');
-  }
-});
+
+
+
+
+// drawingRef.once('value').then((snap) => {
+//   let data = snap.val();
+//   var keys = Object.keys(data);
+//   for(var i = 0; i < keys.length; i++) {
+//     var key = keys[i];
+//     console.log(key);
+//     $("table").append('<tr><td><a href="new.html?id='+key+'">'+key+'</a></td></tr>');
+//   }
+// });
