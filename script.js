@@ -1,5 +1,8 @@
 //VARS
 var lines = [];
+var userLines = [];
+var undoLines = [];
+var moveNum = 1;
 var size = 2;
 var ci = {
   width: $(window).width(),
@@ -32,14 +35,14 @@ var span = $(".close");
 
 //FIREBASE INIT
 var config = {
-    apiKey: "AIzaSyCb9Nxkj52W_mNVnZKY_18QlGerxbs0Ogc",
-    authDomain: "odraw-x.firebaseapp.com",
-    databaseURL: "https://odraw-x.firebaseio.com",
-    projectId: "odraw-x",
-    storageBucket: "odraw-x.appspot.com",
-    messagingSenderId: "885108201960"
-  };
-  firebase.initializeApp(config);
+  apiKey: "AIzaSyCb9Nxkj52W_mNVnZKY_18QlGerxbs0Ogc",
+  authDomain: "odraw-x.firebaseapp.com",
+  databaseURL: "https://odraw-x.firebaseio.com",
+  projectId: "odraw-x",
+  storageBucket: "odraw-x.appspot.com",
+  messagingSenderId: "885108201960"
+};
+firebase.initializeApp(config);
 var database = firebase.database();
 var dblink = 'drawing/'+getUrlVars()["id"];
 var drawingRef = firebase.database().ref(dblink);
@@ -47,33 +50,10 @@ drawingRef.on('value', function(liness) {
   if(liness.val() == null) {
     lines = [];
   } else {
-    lines = liness.val();
+    lines = liness.val().lines;
     drawLines(lines);
   }
 });
-
-//EVENT LISTENERS
-$(c).on('mousemove', mouseMove);
-c.addEventListener('mousedown', function() {mouseDown = true;});
-c.addEventListener('mouseup', function() {mouseDown=false;});
-$(document).on('keypress', function(e) {getKeyPressed(e);});
-document.addEventListener('wheel', mouseWheel);
-
-function getMousePos(canvas, evt) {
-  var rect = c.getBoundingClientRect();
-  return {
-    lastX: mousePos.x,
-    lastY: mousePos.y,
-    x: evt.clientX - rect.left,
-    y: evt.clientY - rect.top
-  };
-}
-
-//FUNCTION EVENT LISTENERS
-function mouseMove(evt) {
-  mousePos = getMousePos(c, evt);
-  anyMove();
-}
 
 function anyMove() {
   if(mouseDown) {
@@ -85,59 +65,19 @@ function anyMove() {
       startX: mousePos.lastX,
       startY: mousePos.lastY,
       endX: mousePos.x,
-      endY: mousePos.y
+      endY: mousePos.y,
+      moveNum
     }
     writeLines(line);
   }
 }
 
-function getKeyPressed(event) {
-  var keynum;
-  if(window.event) {
-    keynum = event.keyCode;
-  } else if(e.which){
-    keynum = e.which;
-  }
-
-  var key = String.fromCharCode(keynum);
-  if(key == "1") {
-    color.r+=10;
-  } else if (key == "2") {
-    color.g+=10;
-  } else if (key == "3") {
-    color.b+=10;
-  }
-  if(key == "q") {
-    color.r-=10;
-  } else if (key == "w") {
-    color.g-=10;
-  } else if (key == "e") {
-    color.b-=10;
-  }
-  $("#color").css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
-  if(key == "h") {
-    modal("switch");
-  }
-  if(key == "c") {
-    drawingRef.remove();
-    ctx.clearRect(0, 0, ci.width, ci.height);
-  }
-}
-function mouseWheel(e) {
-  if (event.wheelDelta >= 120)
-    size++;
-  else if (event.wheelDelta <= -120)
-    size--;
-  ctx.lineWidth = size;
-  $("#brushSize")[0].innerHTML = "(Scroll With the Mouse Wheel) Brush Size: "+size;
-}
-
 //DRAWING
 function drawLines() {
-  var keys = Object.keys(lines);
-  for(var i = 0; i < keys.length; i++) {
-    drawLine(lines[keys[i]]);
-  }
+  ctx.clearRect(0, 0, ci.width, ci.height);
+  Object.values(lines).forEach((e)=> {
+    drawLine(e);
+  })
 }
 function drawLine(line) {
   ctx.beginPath();
@@ -150,11 +90,67 @@ function drawLine(line) {
   ctx.stroke();
 }
 function writeLines(line) {
-  firebase.database().ref(dblink).push(line);
+  userLines.push(drawingRef.child("lines").push(line).key);
+}
+function pushAllLines() {
+  drawingRef.child("lines").set(lines);
+}
+
+function subtract(arr1, arr2) {
+  let arr = [];
+  if (arr1 == null) debugger
+  arr1.forEach((e)=>{
+    let isInList = arr2.indexOf(e) == -1;
+    if (isInList) {
+      arr.push(e);
+    }
+  });
+  return arr;
+}
+function subtractObj(obj1, obj2) {
+  let obj = {};
+  if (obj1 == null) debugger
+  Object.keys(obj1).forEach((e)=>{
+    let isInList = Object.keys(obj2).indexOf(e) == -1;
+    if (isInList) {
+      obj[e] = obj1[e];
+    }
+  });
+  return obj;
+}
+function getLine(l) {
+  return lines[l];
+}
+
+function getLines(l) {
+  return l.map((line)=> {
+    return lines[line]
+  })
+}
+
+function undo() {
+  let toUndo = {};
+  userLines.some((e)=> {
+    let line = getLine(e)
+    if (line != null) {
+      if (line.moveNum == moveNum-1) {
+        toUndo[e] = line;
+        undoLines.push(line);
+      }
+    }
+  });
+
+  lines = subtractObj(lines, toUndo);
+  userLines = subtract(userLines, Object.keys(toUndo));
+  pushAllLines();
+  drawLines();
+  if (moveNum > 0) {
+    moveNum--;
+  }
 }
 
 //PAGE SCRIPTS
-$(document).ready( () => {
+$(document).ready(() => {
   cv.render();
   $("#close").click(function() {
     modal(false);
@@ -199,7 +195,7 @@ window.requestAnimFrame = (function (callback) {
 // })();
 
 c.addEventListener("touchstart", function (e) {
-        mousePos = getTouchPos(c, e);
+  mousePos = getTouchPos(c, e);
   var touch = e.touches[0];
   var mouseEvent = new MouseEvent("mousedown", {
     clientX: touch.clientX,
@@ -248,3 +244,71 @@ window.onload = function() {
   }, false);
 }
 
+function getKeyPressed(event) {
+  var keynum;
+  if(window.event) {
+    keynum = event.keyCode;
+  } else if(e.which){
+    keynum = e.which;
+  }
+
+  var key = String.fromCharCode(keynum);
+  if(key == "1") {
+    color.r+=10;
+  } else if (key == "2") {
+    color.g+=10;
+  } else if (key == "3") {
+    color.b+=10;
+  }
+  if(key == "q") {
+    color.r-=10;
+  } else if (key == "w") {
+    color.g-=10;
+  } else if (key == "e") {
+    color.b-=10;
+  } else if (key == "z") {
+    undo();
+  }
+  //  else if (key == "b") {
+  //   moveNum++;
+  // }
+  $("#color").css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
+  if(key == "h") {
+    modal("switch");
+  }
+  if(key == "c") {
+    drawingRef.remove();
+    userLines = [];
+    ctx.clearRect(0, 0, ci.width, ci.height);
+  }
+}
+function mouseWheel(e) {
+  if (event.wheelDelta >= 120)
+    size++;
+  else if (event.wheelDelta <= -120)
+    size--;
+  ctx.lineWidth = size;
+  $("#brushSize")[0].innerHTML = "(Scroll With the Mouse Wheel) Brush Size: "+size;
+}
+
+$(c).on('mousemove', mouseMove);
+c.addEventListener('mousedown', function() {mouseDown = true;});
+c.addEventListener('mouseup', function() {mouseDown=false;moveNum++;});
+$(document).on('keypress', function(e) {getKeyPressed(e);});
+document.addEventListener('wheel', mouseWheel);
+
+function getMousePos(canvas, evt) {
+  var rect = c.getBoundingClientRect();
+  return {
+    lastX: mousePos.x,
+    lastY: mousePos.y,
+    x: evt.clientX - rect.left,
+    y: evt.clientY - rect.top
+  };
+}
+
+//FUNCTION EVENT LISTENERS
+function mouseMove(evt) {
+  mousePos = getMousePos(c, evt);
+  anyMove();
+}

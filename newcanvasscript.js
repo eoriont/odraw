@@ -11,7 +11,6 @@ firebase.initializeApp(config);
 
 var db = firebase.database();
 var drawingRef = db.ref('drawing');
-var canvasList = [];
 
 $(document).ready(function() {
   $("#newDrawing").click(createDrawing);
@@ -49,16 +48,3 @@ function getUrlVars() {
   }
   return vars;
 }
-
-
-
-
-// drawingRef.once('value').then((snap) => {
-//   let data = snap.val();
-//   var keys = Object.keys(data);
-//   for(var i = 0; i < keys.length; i++) {
-//     var key = keys[i];
-//     console.log(key);
-//     $("table").append('<tr><td><a href="new.html?id='+key+'">'+key+'</a></td></tr>');
-//   }
-// });
