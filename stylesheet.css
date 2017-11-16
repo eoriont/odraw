@@ -54,3 +54,9 @@ td, th {
 tr:nth-child(even) {
   background-color: #dddddd;
 }
+
+#color {
+  border: 8px solid black;
+  border-radius: 20px;
+  padding: 20px;
+}

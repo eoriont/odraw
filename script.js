@@ -21,8 +21,12 @@ var mousePos = {
   lastX: 0,
   lastY: 0,
   x: 0,
-  y:0
+  y: 0
 };
+var lastMouse = {
+  x: 0,
+  y: 0,
+}
 var color = {
   r: 255,
   g: 255,
@@ -32,6 +36,8 @@ var mouseDown;
 var c = cv.canvas;
 var ctx = c.getContext("2d");
 var span = $(".close");
+
+var mode = "line";
 
 //FIREBASE INIT
 var config = {
@@ -56,19 +62,52 @@ drawingRef.on('value', function(liness) {
 });
 
 function anyMove() {
+  drawLines()
   if(mouseDown) {
-    var line = {
-      colorr: color.r,
-      colorg: color.g,
-      colorb: color.b,
-      size: size,
-      startX: mousePos.lastX,
-      startY: mousePos.lastY,
-      endX: mousePos.x,
-      endY: mousePos.y,
-      moveNum
+    if (mode == "line") {
+      var line = {
+        colorr: color.r,
+        colorg: color.g,
+        colorb: color.b,
+        size: size,
+        startX: mousePos.lastX,
+        startY: mousePos.lastY,
+        endX: mousePos.x,
+        endY: mousePos.y,
+        moveNum
+      }
+      writeLines(line);
     }
-    writeLines(line);
+    if (mode == "circle") {
+      console.log("circle");
+      // ctx.beginPath();
+      // ctx.moveTo(lastMouse.x, lastMouse.y);
+      // //ctx.lineWidth = line.size;
+      // //ctx.strokeStyle = "rgb("+line.colorr+","+line.colorg+","+line.colorb+")";
+      // ctx.lineJoin = ctx.lineCap = 'round';
+      // ctx.globalCompositeOperation = "source-over";
+      // ctx.lineTo(mousePos.x, mousePos.y);
+      // ctx.stroke();
+
+      let centerX = (mousePos.x+lastMouse.x)/2
+      let centerY = (mousePos.y+lastMouse.y)/2
+      let radiusX = Math.abs(mousePos.x-lastMouse.x);
+      let radiusY = Math.abs(mousePos.y-lastMouse.y);
+      // ctx.beginPath();
+      // ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+      // ctx.fillStyle = 'green';
+      // ctx.fill();
+      // ctx.lineWidth = 5;
+      // ctx.strokeStyle = '#003300';
+      // ctx.stroke();
+      ctx.beginPath();
+      //ctx.ellipse(lastMouse.x, lastMouse.y, mousePos.x, mousePos.y, 45 * Math.PI/180, 0, 2 * Math.PI);
+      ctx.ellipse(centerX, centerY, radiusX, radiusY, 45 * Math.PI/180, 0, 2 * Math.PI);
+      ctx.stroke();
+
+    }
+  } else {
+    lastMouse = {x: mousePos.x, y: mousePos.y};
   }
 }
 
@@ -95,10 +134,8 @@ function writeLines(line) {
 function pushAllLines() {
   drawingRef.child("lines").set(lines);
 }
-
 function subtract(arr1, arr2) {
   let arr = [];
-  if (arr1 == null) debugger
   arr1.forEach((e)=>{
     let isInList = arr2.indexOf(e) == -1;
     if (isInList) {
@@ -169,7 +206,7 @@ function getUrlVars() {
 }
 
 function modal(state) {
-  var modal = $("#myModal");
+  var modal = $("#options");
   if(state == "switch") {
     $(modal).toggle();
   } else if(state) {
@@ -180,12 +217,12 @@ function modal(state) {
 }
 
 window.requestAnimFrame = (function (callback) {
-    return window.requestAnimationFrame || 
-       window.webkitRequestAnimationFrame ||
-       window.mozRequestAnimationFrame ||
-       window.oRequestAnimationFrame ||
-       window.msRequestAnimaitonFrame ||
-       function (callback) {
+  return window.requestAnimationFrame || 
+  window.webkitRequestAnimationFrame ||
+  window.mozRequestAnimationFrame ||
+  window.oRequestAnimationFrame ||
+  window.msRequestAnimaitonFrame ||
+  function (callback) {
     window.setTimeout(callback, 1000/60);
   };
 })();
@@ -195,7 +232,7 @@ window.requestAnimFrame = (function (callback) {
 // })();
 
 c.addEventListener("touchstart", function (e) {
-  mousePos = getTouchPos(c, e);
+  mousePos = getTouchPos(e);
   var touch = e.touches[0];
   var mouseEvent = new MouseEvent("mousedown", {
     clientX: touch.clientX,
@@ -218,8 +255,8 @@ c.addEventListener("touchmove", function (e) {
   c.dispatchEvent(mouseEvent);
 }, false);
 
-function getTouchPos(canvasDom, touchEvent) {
-  var rect = canvasDom.getBoundingClientRect();
+function getTouchPos(touchEvent) {
+  var rect = c.getBoundingClientRect();
   return {
     x: touchEvent.touches[0].clientX - rect.left,
     y: touchEvent.touches[0].clientY - rect.top
@@ -268,10 +305,11 @@ function getKeyPressed(event) {
     color.b-=10;
   } else if (key == "z") {
     undo();
+  } else if (key == "p") {
+    mode = "line";
+  } else if (key == "o") {
+    mode = "circle";
   }
-  //  else if (key == "b") {
-  //   moveNum++;
-  // }
   $("#color").css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
   if(key == "h") {
     modal("switch");
@@ -292,12 +330,12 @@ function mouseWheel(e) {
 }
 
 $(c).on('mousemove', mouseMove);
-c.addEventListener('mousedown', function() {mouseDown = true;});
-c.addEventListener('mouseup', function() {mouseDown=false;moveNum++;});
-$(document).on('keypress', function(e) {getKeyPressed(e);});
+c.addEventListener('mousedown', () => {mouseDown = true;});
+c.addEventListener('mouseup', () => {mouseDown=false;moveNum++;});
+$(document).on('keypress', getKeyPressed);
 document.addEventListener('wheel', mouseWheel);
 
-function getMousePos(canvas, evt) {
+function getMousePos(evt) {
   var rect = c.getBoundingClientRect();
   return {
     lastX: mousePos.x,
@@ -309,6 +347,6 @@ function getMousePos(canvas, evt) {
 
 //FUNCTION EVENT LISTENERS
 function mouseMove(evt) {
-  mousePos = getMousePos(c, evt);
+  mousePos = getMousePos(evt);
   anyMove();
 }

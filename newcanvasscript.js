@@ -16,12 +16,12 @@ $(document).ready(function() {
   $("#newDrawing").click(createDrawing);
 
   $("#submit_code").click(() => {
-    let code = $("#passcode").val();
+    let code = parseInt($("#passcode").val());
+    console.log(code)
     db.ref('drawing/'+code).once('value').then((snap)=>{
       let data = snap.val();
       if (data) {
-        location.href = "new.html?id="+id;
-        
+        location.href = "new.html?id="+code;
       } else {
         $("body").append("Could not find that canvas!")
       }
