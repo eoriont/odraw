@@ -74,48 +74,56 @@ function anyMove() {
         startY: mousePos.lastY,
         endX: mousePos.x,
         endY: mousePos.y,
-        moveNum
+        moveNum,
+        mode
       }
       writeLines(line);
     }
     if (mode == "circle") {
-      console.log("circle");
-      // ctx.beginPath();
-      // ctx.moveTo(lastMouse.x, lastMouse.y);
-      // //ctx.lineWidth = line.size;
-      // //ctx.strokeStyle = "rgb("+line.colorr+","+line.colorg+","+line.colorb+")";
-      // ctx.lineJoin = ctx.lineCap = 'round';
-      // ctx.globalCompositeOperation = "source-over";
-      // ctx.lineTo(mousePos.x, mousePos.y);
-      // ctx.stroke();
-
-      let centerX = (mousePos.x+lastMouse.x)/2
-      let centerY = (mousePos.y+lastMouse.y)/2
-      let radiusX = Math.abs(mousePos.x-lastMouse.x);
-      let radiusY = Math.abs(mousePos.y-lastMouse.y);
-      // ctx.beginPath();
-      // ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-      // ctx.fillStyle = 'green';
-      // ctx.fill();
-      // ctx.lineWidth = 5;
-      // ctx.strokeStyle = '#003300';
-      // ctx.stroke();
-      ctx.beginPath();
-      //ctx.ellipse(lastMouse.x, lastMouse.y, mousePos.x, mousePos.y, 45 * Math.PI/180, 0, 2 * Math.PI);
-      ctx.ellipse(centerX, centerY, radiusX, radiusY, 45 * Math.PI/180, 0, 2 * Math.PI);
-      ctx.stroke();
-
+      drawEllipse({startX: mousePos.x, startY: mousePos.y, endX: lastMouse.x, endY: lastMouse.y});
     }
   } else {
     lastMouse = {x: mousePos.x, y: mousePos.y};
   }
 }
 
+function drawEllipse(e) {
+  let x1 = e.startX;
+  let x2 = e.endX;
+  let y1 = e.startY;
+  let y2 = e.endY;
+    var radiusX = (x2 - x1) * 0.5,
+        radiusY = (y2 - y1) * 0.5,
+        centerX = x1 + radiusX,
+        centerY = y1 + radiusY,
+        step = 0.01,
+        a = step,
+        pi2 = Math.PI * 2 - step;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX + radiusX * Math.cos(0),
+               centerY + radiusY * Math.sin(0));
+
+    for(; a < pi2; a += step) {
+        ctx.lineTo(centerX + radiusX * Math.cos(a),
+                   centerY + radiusY * Math.sin(a));
+    }
+    
+    ctx.closePath();
+    ctx.strokeStyle = '#FFF';
+    ctx.stroke();
+}
+
 //DRAWING
 function drawLines() {
   ctx.clearRect(0, 0, ci.width, ci.height);
+  if (lines == null) return;
   Object.values(lines).forEach((e)=> {
-    drawLine(e);
+    if (e.mode == "line") {
+      drawLine(e);
+    } else if (e.mode == "circle") {
+      drawEllipse(e);
+    }
   })
 }
 function drawLine(line) {
@@ -231,54 +239,25 @@ window.requestAnimFrame = (function (callback) {
 //   requestAnimFrame(drawLoop);
 // })();
 
-c.addEventListener("touchstart", function (e) {
-  mousePos = getTouchPos(e);
-  var touch = e.touches[0];
-  var mouseEvent = new MouseEvent("mousedown", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
-  });
-  c.dispatchEvent(mouseEvent);
-}, false);
 
-c.addEventListener("touchend", function (e) {
-  var mouseEvent = new MouseEvent("mouseup", {});
-  c.dispatchEvent(mouseEvent);
-}, false);
-
-c.addEventListener("touchmove", function (e) {
-  var touch = e.touches[0];
-  var mouseEvent = new MouseEvent("mousemove", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
-  });
-  c.dispatchEvent(mouseEvent);
-}, false);
-
-function getTouchPos(touchEvent) {
-  var rect = c.getBoundingClientRect();
-  return {
-    x: touchEvent.touches[0].clientX - rect.left,
-    y: touchEvent.touches[0].clientY - rect.top
-  };
-}
-
-window.onload = function() {
-  document.body.addEventListener("touchstart", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
+window.onmouseup = function() {
+  mouseDown=false;
+  moveNum++;
+  if (mode == "circle") {
+    var line = {
+      colorr: color.r,
+      colorg: color.g,
+      colorb: color.b,
+      size: size,
+      startX: lastMouse.x,
+      startY: lastMouse.y,
+      endX: mousePos.x,
+      endY: mousePos.y,
+      moveNum,
+      mode
     }
-  }, false);
-  document.body.addEventListener("touchend", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
-    }
-  }, false);
-  document.body.addEventListener("touchmove", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
-    }
-  }, false);
+    writeLines(line);
+  }
 }
 
 function getKeyPressed(event) {
@@ -331,7 +310,6 @@ function mouseWheel(e) {
 
 $(c).on('mousemove', mouseMove);
 c.addEventListener('mousedown', () => {mouseDown = true;});
-c.addEventListener('mouseup', () => {mouseDown=false;moveNum++;});
 $(document).on('keypress', getKeyPressed);
 document.addEventListener('wheel', mouseWheel);
 
@@ -350,3 +328,56 @@ function mouseMove(evt) {
   mousePos = getMousePos(evt);
   anyMove();
 }
+
+/////////////////////////////////////////
+
+c.addEventListener("touchstart", function (e) {
+  mousePos = getTouchPos(e);
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousedown", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  c.dispatchEvent(mouseEvent);
+}, false);
+
+c.addEventListener("touchend", function (e) {
+  var mouseEvent = new MouseEvent("mouseup", {});
+  c.dispatchEvent(mouseEvent);
+}, false);
+
+c.addEventListener("touchmove", function (e) {
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousemove", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  c.dispatchEvent(mouseEvent);
+}, false);
+
+function getTouchPos(touchEvent) {
+  var rect = c.getBoundingClientRect();
+  return {
+    x: touchEvent.touches[0].clientX - rect.left,
+    y: touchEvent.touches[0].clientY - rect.top
+  };
+}
+
+window.onload = function() {
+  document.body.addEventListener("touchstart", function (e) {
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchend", function (e) {
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchmove", function (e) {
+    if (e.target == c) {
+      e.preventDefault();
+    }
+  }, false);
+}
+
