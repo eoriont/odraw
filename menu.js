@@ -1,16 +1,33 @@
-function modal(state) {
-  var modal = $("#options");
-  if(state == "switch") {
-    $(modal).toggle();
-  } else if(state) {
-    $(modal).show();
-  } else {
-    $(modal).hide();
-  }
-}
+var navState = false;
 
 $(document).ready(() => {
   $("#close").click(function() {
-    modal(false);
+    closeNav();
+  });
+
+  $("#brushSize").on('input', () => {
+    size = $("#brushSize").val();
+  })
+
+  $("#col").val("#FFFFFF");
+  $("#col").change(function(){
+    var c = $("#col").val();
+    color = c;
+    $("#test_wrapper").css('background-color', c);
   });
 });
+
+function toggleNav() {
+  if (navState) closeNav();
+  else openNav();
+}
+
+function openNav() {
+  navState = true;
+  $("#sidenav").width(250);
+}
+
+function closeNav() {
+  navState = false;
+  $("#sidenav").width(0);
+}

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://www.gstatic.com/firebasejs/3.5.0/firebase.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jquery/jquery-mousewheel/jquery.mousewheel.min.js" type="text/javascript"></script>
     <script src="firebase.js"></script>
@@ -12,14 +11,29 @@
   </head>
 
   <body>
-    <div id="options" class="modal">
-      <div class="modal-content">
-        <span id="close">×</span>
-        <h2>ODraw 2.0</h2>
-        <p>(Scroll With the Mouse Wheel) Brush Size: <span id="brushSize">1</span></p>
-        <p>(Use 1, 2, 3, q, w, e) Color: </p>
-        <div id="color">...</div>
+    <div class="sidenav" id="sidenav">
+      <span class="closebtn" id="close">&times;</span>
+      <div class="settings">
+
+        <div class="slidecontainer">
+          <label class="lbl" for="brushSize">Brush Size</label>
+          <input type="range" min="1" max="100" value="2" class="slider" id="brushSize">
+        </div>
+
+        <br>
+
+        <div id="colorcontainer" class="">
+          <label class="lbl" for="inp">Color</label>
+          <label id="test_wrapper">
+            <input type="color" id="col">
+          </label>
+        </div>
+
       </div>
+    </div>
+
+    <div id="main">
+
     </div>
   </body>
 </html>
