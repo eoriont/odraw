@@ -17,7 +17,6 @@ $(document).ready(function() {
 
   $("#submit_code").click(() => {
     let code = parseInt($("#passcode").val());
-    console.log(code)
     db.ref('drawing/'+code).once('value').then((snap)=>{
       let data = snap.val();
       if (data) {
@@ -30,7 +29,6 @@ $(document).ready(function() {
 });
 
 let id = Math.floor(Math.random()*10000);
-console.log(id);
 function createDrawing() {
   var newDrawingRef = db.ref('drawing/'+id).set({
     test: 1

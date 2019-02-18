@@ -35,23 +35,9 @@ var color = {
 var mouseDown;
 var c = cv.canvas;
 var ctx = c.getContext("2d");
-var span = $(".close");
 
 var mode = "line";
 
-//FIREBASE INIT
-var config = {
-  apiKey: "AIzaSyCb9Nxkj52W_mNVnZKY_18QlGerxbs0Ogc",
-  authDomain: "odraw-x.firebaseapp.com",
-  databaseURL: "https://odraw-x.firebaseio.com",
-  projectId: "odraw-x",
-  storageBucket: "odraw-x.appspot.com",
-  messagingSenderId: "885108201960"
-};
-firebase.initializeApp(config);
-var database = firebase.database();
-var dblink = 'drawing/'+getUrlVars()["id"];
-var drawingRef = firebase.database().ref(dblink);
 drawingRef.on('value', function(liness) {
   if(liness.val() == null) {
     lines = [];
@@ -99,7 +85,7 @@ function drawEllipse(e) {
         step = 0.01,
         a = step,
         pi2 = Math.PI * 2 - step;
-    
+
     ctx.beginPath();
     ctx.moveTo(centerX + radiusX * Math.cos(0),
                centerY + radiusY * Math.sin(0));
@@ -108,12 +94,11 @@ function drawEllipse(e) {
         ctx.lineTo(centerX + radiusX * Math.cos(a),
                    centerY + radiusY * Math.sin(a));
     }
-    
+
     ctx.closePath();
     ctx.strokeStyle = '#FFF';
     ctx.stroke();
 }
-
 //DRAWING
 function drawLines() {
   ctx.clearRect(0, 0, ci.width, ci.height);
@@ -126,6 +111,7 @@ function drawLines() {
     }
   })
 }
+
 function drawLine(line) {
   ctx.beginPath();
   ctx.moveTo(line.startX, line.startY);
@@ -136,12 +122,15 @@ function drawLine(line) {
   ctx.lineTo(line.endX, line.endY);
   ctx.stroke();
 }
+
 function writeLines(line) {
   userLines.push(drawingRef.child("lines").push(line).key);
 }
+
 function pushAllLines() {
   drawingRef.child("lines").set(lines);
 }
+
 function subtract(arr1, arr2) {
   let arr = [];
   arr1.forEach((e)=>{
@@ -152,6 +141,7 @@ function subtract(arr1, arr2) {
   });
   return arr;
 }
+
 function subtractObj(obj1, obj2) {
   let obj = {};
   if (obj1 == null) debugger
@@ -163,14 +153,15 @@ function subtractObj(obj1, obj2) {
   });
   return obj;
 }
+
 function getLine(l) {
   return lines[l];
 }
 
 function getLines(l) {
-  return l.map((line)=> {
-    return lines[line]
-  })
+  return l.map((line) => {
+    return lines[line];
+  });
 }
 
 function undo() {
@@ -194,54 +185,32 @@ function undo() {
   }
 }
 
-//PAGE SCRIPTS
-$(document).ready(() => {
+$(document).ready(()=> {
   cv.render();
-  $("#close").click(function() {
-    modal(false);
-  });
+  $(document).attr("title", "ODraw: " + getUrlVars()["id"]);
 })
 
-function getUrlVars() {
-  var vars = [], hash;
-  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-  for(var i = 0; i < hashes.length; i++) {
-    hash = hashes[i].split('=');
-    vars.push(hash[0]);
-    vars[hash[0]] = hash[1];
-  }
-  return vars;
-}
+function redo() {
+  if (undoLines.length == 0) return;
+  var oldMoveNum = undoLines[undoLines.length - 1].moveNum;
+  var undidMove = [];
 
-function modal(state) {
-  var modal = $("#options");
-  if(state == "switch") {
-    $(modal).toggle();
-  } else if(state) {
-    $(modal).show();
-  } else {
-    $(modal).hide();
+  for (let line of undoLines) {
+    if (line.moveNum == oldMoveNum) {
+      undidMove.push(line);
+    }
+  }
+
+  undoLines = subtract(undoLines, undidMove);
+  undidMove.map((l) => l.moveNum = moveNum);
+  moveNum++;
+  for (let l of undidMove) {
+    writeLines(l);
   }
 }
 
-window.requestAnimFrame = (function (callback) {
-  return window.requestAnimationFrame || 
-  window.webkitRequestAnimationFrame ||
-  window.mozRequestAnimationFrame ||
-  window.oRequestAnimationFrame ||
-  window.msRequestAnimaitonFrame ||
-  function (callback) {
-    window.setTimeout(callback, 1000/60);
-  };
-})();
-
-// (function drawLoop () {
-//   requestAnimFrame(drawLoop);
-// })();
-
-
-window.onmouseup = function() {
-  mouseDown=false;
+$(document).mouseup(() => {
+  mouseDown = false;
   moveNum++;
   if (mode == "circle") {
     var line = {
@@ -258,17 +227,14 @@ window.onmouseup = function() {
     }
     writeLines(line);
   }
-}
+});
 
-function getKeyPressed(event) {
-  var keynum;
-  if(window.event) {
-    keynum = event.keyCode;
-  } else if(e.which){
-    keynum = e.which;
-  }
-
+$(document).keydown((e) => {
+  var keynum = e.keyCode;
   var key = String.fromCharCode(keynum);
+  if (e.metaKey && key != "R") {
+    e.preventDefault();
+  }
   if(key == "1") {
     color.r+=10;
   } else if (key == "2") {
@@ -278,106 +244,48 @@ function getKeyPressed(event) {
   }
   if(key == "q") {
     color.r-=10;
-  } else if (key == "w") {
+  } else if (key == "W") {
     color.g-=10;
-  } else if (key == "e") {
+  } else if (key == "E") {
     color.b-=10;
-  } else if (key == "z") {
+  } else if (key == "Z" && e.metaKey) {
     undo();
-  } else if (key == "p") {
+  } else if (key == "Y" && e.metaKey) {
+    redo();
+  } else if (key == "P") {
     mode = "line";
-  } else if (key == "o") {
+  } else if (key == "O") {
     mode = "circle";
   }
   $("#color").css('background-color', 'rgb('+color.r+','+color.g+','+color.b+')');
   if(key == "h") {
     modal("switch");
   }
-  if(key == "c") {
+  if(key == "C") {
     drawingRef.remove();
     userLines = [];
     ctx.clearRect(0, 0, ci.width, ci.height);
   }
-}
-function mouseWheel(e) {
-  if (event.wheelDelta >= 120)
-    size++;
-  else if (event.wheelDelta <= -120)
-    size--;
-  ctx.lineWidth = size;
-  $("#brushSize")[0].innerHTML = "(Scroll With the Mouse Wheel) Brush Size: "+size;
-}
+});
 
-$(c).on('mousemove', mouseMove);
-c.addEventListener('mousedown', () => {mouseDown = true;});
-$(document).on('keypress', getKeyPressed);
-document.addEventListener('wheel', mouseWheel);
-
-function getMousePos(evt) {
+$(c).mousemove((e) => {
   var rect = c.getBoundingClientRect();
-  return {
+  mousePos = {
     lastX: mousePos.x,
     lastY: mousePos.y,
-    x: evt.clientX - rect.left,
-    y: evt.clientY - rect.top
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
   };
-}
-
-//FUNCTION EVENT LISTENERS
-function mouseMove(evt) {
-  mousePos = getMousePos(evt);
   anyMove();
-}
+});
 
-/////////////////////////////////////////
+$(c).mousedown(() => {
+  mouseDown = true;
+});
 
-c.addEventListener("touchstart", function (e) {
-  mousePos = getTouchPos(e);
-  var touch = e.touches[0];
-  var mouseEvent = new MouseEvent("mousedown", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
-  });
-  c.dispatchEvent(mouseEvent);
-}, false);
-
-c.addEventListener("touchend", function (e) {
-  var mouseEvent = new MouseEvent("mouseup", {});
-  c.dispatchEvent(mouseEvent);
-}, false);
-
-c.addEventListener("touchmove", function (e) {
-  var touch = e.touches[0];
-  var mouseEvent = new MouseEvent("mousemove", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
-  });
-  c.dispatchEvent(mouseEvent);
-}, false);
-
-function getTouchPos(touchEvent) {
-  var rect = c.getBoundingClientRect();
-  return {
-    x: touchEvent.touches[0].clientX - rect.left,
-    y: touchEvent.touches[0].clientY - rect.top
-  };
-}
-
-window.onload = function() {
-  document.body.addEventListener("touchstart", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
-    }
-  }, false);
-  document.body.addEventListener("touchend", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
-    }
-  }, false);
-  document.body.addEventListener("touchmove", function (e) {
-    if (e.target == c) {
-      e.preventDefault();
-    }
-  }, false);
-}
-
+$(c).mousewheel((e) => {
+  if (e.deltaY >= 1) size+=.1;
+  else if (e.deltaY <= -1) size-=.1;
+  ctx.lineWidth = size;
+  $("#brushSize").html(size);
+});
