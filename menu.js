@@ -1,16 +1,14 @@
 var navState = false;
 
 $(document).ready(() => {
-  $("#close").click(function() {
-    closeNav();
-  });
+  $("#close").click(closeNav);
 
   $("#brushSize").on('input', () => {
     size = $("#brushSize").val();
   })
 
   $("#col").val("#FFFFFF");
-  $("#col").change(function(){
+  $("#col").change(() => {
     var c = $("#col").val();
     color = c;
     $("#test_wrapper").css('background-color', c);

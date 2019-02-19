@@ -16,15 +16,94 @@ var userMoves = {};
 var moveIdsList = [];
 var currentMove = {};
 
+var allMoves = {};
+
 var undoMoves = {};
 var undoMoveIdsList = [];
 
-$(document).ready(()=> {
+var canvasId = getUrlVars()["id"];
+var canvasCollection = db.collection('canvases');
+var userId = client.auth.user.id;
+var _id = new stitch.BSON.ObjectId(canvasId);
+
+var newChanges = {};
+
+$(document).ready(() => {
   $(c).attr('width', $(window).width());
   $(c).attr('height', $(window).height());
   $("#main").append($(c))
-  $(document).attr("title", "ODraw: " + getUrlVars()["id"]);
+  $(document).attr("title", "ODraw: " + canvasId);
+  watcher();
+  writeToDb();
 });
+
+var stream1;
+async function watcher() {
+  canvasCollection.find({_id}).toArray().then((doc) => {
+    allMoves = doc[0].moves != null ? doc[0].moves : {};
+    drawMoves();
+  });
+
+  stream1 = await canvasCollection.watch([_id]);
+  stream1.onNext((event) => {
+     allMoves = event.fullDocument.moves != null ? event.fullDocument.moves : {};
+     console.log(Object.keys(allMoves).length)
+     drawMoves();
+   });
+}
+
+function upToDate(obj1, obj2) {
+  for (let k in obj1) {
+    if (!deepEqual(obj1[k], obj2[k])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const ttime = 1;
+function writeToDb() {
+  console.log('dbwrite')
+  if (Object.keys(newChanges).length != 0) {
+    let moves = {};
+    for (let m in newChanges) {
+      moves["moves."+m] = newChanges[m];
+    }
+
+    canvasCollection.updateOne({_id}, {$set: moves}).then(() => {
+      if (upToDate(newChanges, allMoves)) {
+        newChanges = {};
+      }
+      setTimeout(writeToDb, ttime);
+    }).catch(err => console.error);
+  } else {
+    setTimeout(writeToDb, ttime);
+  }
+}
+
+function deepEqual (x, y) {
+  if (x === y) {
+    return true;
+  }
+  else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
+    if (Object.keys(x).length != Object.keys(y).length)
+      return false;
+
+    for (var prop in x) {
+      if (y.hasOwnProperty(prop))
+      {
+        if (! deepEqual(x[prop], y[prop]))
+          return false;
+      }
+      else
+        return false;
+    }
+
+    return true;
+  }
+  else
+    return false;
+}
 
 function genId() {
   var id = '_' + Math.random().toString(36).substr(2, 9);
@@ -49,6 +128,7 @@ function anyMove() {
         color,
         size,
         id: genId(),
+        userId,
         data: [
           new Point(mousePos.lastX, mousePos.lastY),
           new Point(mousePos.x, mousePos.y)
@@ -64,7 +144,7 @@ function anyMove() {
 
 function drawMoves() {
   ctx.clearRect(0, 0, $(window).width(), $(window).height());
-  Object.values(userMoves).forEach((move) => {
+  Object.values(allMoves).concat(Object.values(userMoves)).forEach((move) => {
     if (move.mode == "line") {
       drawLine(move);
     }
@@ -87,6 +167,7 @@ function drawLine(line) {
 
 function writeMoves(move) {
   userMoves[move.id] = move;
+  newChanges[move.id] = move
 }
 
 function undo() {
@@ -100,7 +181,17 @@ function undo() {
 
   delete userMoves[undoMoveId];
 
-  drawMove();
+  undoDB(undoMove);
+
+  drawMoves();
+}
+
+function undoDB(move) {
+  let obj = {};
+  obj["moves."+move.id] = 0;
+  canvasCollection.updateOne({_id}, {$unset: obj}).then((doc) => {
+    drawMoves();
+  }).catch(err => console.error);
 }
 
 function redo() {
@@ -114,7 +205,17 @@ function redo() {
 
   delete undoMoves[oldMoveId];
 
+  redoDB(oldMove);
+
   drawMoves()
+}
+
+function redoDB(move) {
+  let obj = {};
+  obj["moves."+move.id] = move;
+  canvasCollection.updateOne({_id}, {$set: obj}).then((doc) => {
+    drawMoves();
+  }).catch(err => console.error);
 }
 
 $(c).mouseup(() => {
@@ -139,8 +240,11 @@ $(document).keydown((e) => {
     toggleNav();
   }
   if(key == "C") {
-    userMoves = { };
+    userMoves = {};
     moveIdsList = [];
+    canvasCollection.updateOne({_id}, {$unset: {"moves": 0}}).then(() => {
+      console.log("cleared")
+    })
     ctx.clearRect(0, 0, $(window).width(), $(window).height());
   }
 });
@@ -166,3 +270,14 @@ $(c).mousewheel((e) => {
   ctx.lineWidth = size;
   $("#brushSize").html(size);
 });
+
+function getUrlVars() {
+  var vars = [], hash;
+  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+  for(var i = 0; i < hashes.length; i++) {
+    hash = hashes[i].split('=');
+    vars.push(hash[0]);
+    vars[hash[0]] = hash[1];
+  }
+  return vars;
+}
