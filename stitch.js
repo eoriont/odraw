@@ -2,9 +2,7 @@ const client = stitch.Stitch.initializeDefaultAppClient('odraw-ouzze');
 
 const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('odraw');
 
-client.auth.loginWithCredential(new stitch.AnonymousCredential()).catch(err => {
-  console.error(err)
-});
+client.auth.loginWithCredential(new stitch.AnonymousCredential()).catch(err => console.error);
 
 var canvasCollection = db.collection('canvases');
 var userId = client.auth.user.id;
@@ -20,7 +18,6 @@ async function watcher() {
   stream1 = await canvasCollection.watch([_id]);
   stream1.onNext((event) => {
      allMoves = event.fullDocument.moves != null ? event.fullDocument.moves : {};
-     console.log(Object.keys(allMoves).length)
      drawMoves();
    });
 }
@@ -95,15 +92,4 @@ function deepEqual (x, y) {
   }
   else
     return false;
-}
-
-function getUrlVars() {
-  var vars = [], hash;
-  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-  for(var i = 0; i < hashes.length; i++) {
-    hash = hashes[i].split('=');
-    vars.push(hash[0]);
-    vars[hash[0]] = hash[1];
-  }
-  return vars;
 }

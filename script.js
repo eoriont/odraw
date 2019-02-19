@@ -34,12 +34,6 @@ $(document).ready(() => {
   writeToDb();
 });
 
-function genId() {
-  var id = '_' + Math.random().toString(36).substr(2, 9);
-  moveIdsList.push(id);
-  return id;
-}
-
 class Point {
   constructor(x, y) {
     this.x = x;
