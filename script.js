@@ -24,7 +24,7 @@ $(document).ready(function() {
 
     canvasCollection.find({}).toArray().then((result) => {
       for (let i of result) {
-        $("#canvasList").append($(`<a href="/draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
+        $("#canvasList").append($(`<a href="draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
       }
     }).catch(err => console.error);
 
