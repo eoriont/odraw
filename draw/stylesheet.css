@@ -1,0 +1,120 @@
+canvas {
+  border: 1px solid #d3d3d3;
+  background-color: black;
+  padding: 0px;
+  margin: 0px;
+  position: absolute;
+  left: -2px;
+  top: -2px;
+}
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  padding-top: 60px;
+  transition: 0.5s;
+}
+
+.sidenav a, span {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover, span:hover {
+  color: #f1f1f1;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+#main {
+  transition: margin-left .5s;
+  padding: 20px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
+.settings {
+  padding: 20px;
+}
+
+.slidecontainer {
+  width: 100%;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 25px;
+  border-radius: 10px;
+  background: #a0a0a0;
+  outline: none;
+  opacity: 0.9;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+html {
+  font-family: "Consolas", monospace;
+}
+
+.lbl {
+  color: white;
+  font-size: 24px;
+  width: 150px;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #FFF;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 35px;
+  height: 35px;
+  background: #FFF;
+  cursor: pointer;
+}
+
+#col {
+  visibility: hidden;
+  width: 185px;
+  height: 30px;
+}
+
+#test_wrapper {
+  background-color: white;
+  height: 50px;
+  width: 200px;
+  margin: 0;
+  border: 5px solid white;
+  border-radius: 5px;
+}

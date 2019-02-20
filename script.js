@@ -1,177 +1,53 @@
-var size = 2;
-var color = "#FFFFFF"
+const client = stitch.Stitch.initializeDefaultAppClient('odraw-ouzze');
 
-var mouseDown = false;
-var mousePos = {
-  lastX: 0,
-  lastY: 0,
-  x: 0,
-  y: 0
-};
+const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('odraw');
 
-var c = $("<canvas></canvas>");
-var ctx = $(c)[0].getContext("2d");
+client.auth.loginWithCredential(new stitch.AnonymousCredential()).catch(err => console.error);
 
-var userMoves = {};
-var moveIdsList = [];
-var currentMove = {};
+var canvasCollection = db.collection('canvases');
 
-var allMoves = {};
+$(document).ready(function() {
+  $("#newDrawing").click(createDrawing);
 
-var undoMoves = {};
-var undoMoveIdsList = [];
+  $("#submitCode").click(() => {
 
-var canvasId = getUrlVars()["id"];
-
-var newChanges = {};
-
-$(document).ready(() => {
-  $(c).attr('width', $(window).width());
-  $(c).attr('height', $(window).height());
-  $("#main").append($(c))
-  $(document).attr("title", "ODraw: " + canvasId);
-  watcher();
-  writeToDb();
-});
-
-class Point {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-function anyMove() {
-  drawMoves();
-  if(mouseDown) {
-    var move = currentMove;
-    if (Object.keys(currentMove).length == 0) {
-      move = {
-        mode: "line",
-        color,
-        size,
-        id: genId(),
-        userId,
-        data: [
-          new Point(mousePos.lastX, mousePos.lastY),
-          new Point(mousePos.x, mousePos.y)
-        ]
-      }
+    var code = $("#canvasId").val();
+    if (code.length == 24) {
+      canvasCollection.find({_id: new stitch.BSON.ObjectId(code)}).toArray().then((result) => {
+        if (result.length == 0) {
+          findError(code);
+          return;
+        }
+        window.location = `/draw?id=${result[0]._id}`;
+      }).catch(err => console.error);
     } else {
-      move.data.push(new Point(mousePos.x, mousePos.y));
-    }
-    currentMove = move;
-    writeMoves(move);
-  }
-}
-
-function drawMoves() {
-  ctx.clearRect(0, 0, $(window).width(), $(window).height());
-  Object.values(allMoves).concat(Object.values(userMoves)).forEach((move) => {
-    if (move.mode == "line") {
-      drawLine(move);
+      findError(code)
     }
   });
-}
 
-function drawLine(line) {
-  ctx.beginPath();
-  ctx.moveTo(line.data[0].x, line.data[0].y);
-  ctx.lineWidth = line.size;
-  ctx.strokeStyle = line.color;
-  ctx.lineJoin = ctx.lineCap = 'round';
-  ctx.globalCompositeOperation = "source-over";
-  for (let i = 1; i < line.data.length; i++) {
-    let l = line.data[i];
-    ctx.lineTo(l.x, l.y);
-  }
-  ctx.stroke();
-}
+  canvasCollection.find({}).toArray().then((result) => {
+    for (let i of result) {
+      $("#canvasList").append($(`<a href="/draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
+    }
+  }).catch(err => console.error);
 
-function writeMoves(move) {
-  userMoves[move.id] = move;
-  newChanges[move.id] = move
-}
-
-function undo() {
-  if (moveIdsList.length == 0) return;
-
-  var undoMoveId = moveIdsList.pop();
-  var undoMove = userMoves[undoMoveId];
-
-  undoMoveIdsList.push(undoMoveId);
-  undoMoves[undoMoveId] = undoMove;
-
-  delete userMoves[undoMoveId];
-
-  undoDB(undoMove);
-
-  drawMoves();
-}
-
-function redo() {
-  if (undoMoveIdsList.length == 0) return;
-
-  var oldMoveId = undoMoveIdsList.pop();
-  var oldMove = undoMoves[oldMoveId];
-
-  moveIdsList.push(oldMoveId);
-  userMoves[oldMoveId] = oldMove;
-
-  delete undoMoves[oldMoveId];
-
-  redoDB(oldMove);
-
-  drawMoves()
-}
-
-$(c).mouseup(() => {
-  mouseDown = false;
-  currentMove = {};
+  $("#closeAlert").click(closeError)
 });
 
-$(document).keydown((e) => {
-  var keynum = e.keyCode;
-  var key = String.fromCharCode(keynum);
-  if (e.metaKey && key != "R") {
-    e.preventDefault();
-  }
+function closeError() {
+  $("#errAlert").removeClass("show");
+}
 
-  if (key == "Z" && e.metaKey) {
-    undo();
-  } else if (key == "Y" && e.metaKey) {
-    redo();
-  }
+function findError(code) {
+  console.log("test")
+  $("#errAlert").addClass("show");
+  setTimeout(closeError, 5000)
 
-  if(key == "H") {
-    toggleNav();
-  }
-  if(key == "C") {
-    userMoves = {};
-    moveIdsList = [];
-    clearMovesDB();
-    ctx.clearRect(0, 0, $(window).width(), $(window).height());
-  }
-});
+}
 
-$(c).mousemove((e) => {
-  var rect = $(c)[0].getBoundingClientRect();
-  mousePos = {
-    lastX: mousePos.x,
-    lastY: mousePos.y,
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
-  };
-  anyMove();
-});
+function createDrawing() {
+  canvasCollection.insertOne({userid: client.auth.user.id}).then((result) => {
+    window.location = "draw?id="+result.insertedId;
+  }).catch(err => console.error)
 
-$(c).mousedown(() => {
-  mouseDown = true;
-});
-
-$(c).mousewheel((e) => {
-  if (e.deltaY >= 1) size+=.1;
-  else if (e.deltaY <= -1) size-=.1;
-  ctx.lineWidth = size;
-  $("#brushSize").html(size);
-});
+}
