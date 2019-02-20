@@ -2,36 +2,37 @@ const client = stitch.Stitch.initializeDefaultAppClient('odraw-ouzze');
 
 const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('odraw');
 
-client.auth.loginWithCredential(new stitch.AnonymousCredential()).catch(err => console.error);
-
-var canvasCollection = db.collection('canvases');
+var canvasCollection;
 
 $(document).ready(function() {
-  $("#newDrawing").click(createDrawing);
+  client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(doc => {
+    $("#newDrawing").click(createDrawing);
+    $("#submitCode").click(() => {
+      var code = $("#canvasId").val();
+      if (code.length == 24) {
+        canvasCollection.find({_id: new stitch.BSON.ObjectId(code)}).toArray().then((result) => {
+          if (result.length == 0) {
+            findError(code);
+            return;
+          }
+          window.location = `/draw?id=${result[0]._id}`;
+        }).catch(err => console.error);
+      } else {
+        findError(code)
+      }
+    });
 
-  $("#submitCode").click(() => {
+    canvasCollection.find({}).toArray().then((result) => {
+      for (let i of result) {
+        $("#canvasList").append($(`<a href="/draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
+      }
+    }).catch(err => console.error);
 
-    var code = $("#canvasId").val();
-    if (code.length == 24) {
-      canvasCollection.find({_id: new stitch.BSON.ObjectId(code)}).toArray().then((result) => {
-        if (result.length == 0) {
-          findError(code);
-          return;
-        }
-        window.location = `/draw?id=${result[0]._id}`;
-      }).catch(err => console.error);
-    } else {
-      findError(code)
-    }
-  });
-
-  canvasCollection.find({}).toArray().then((result) => {
-    for (let i of result) {
-      $("#canvasList").append($(`<a href="/draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
-    }
+    $("#closeAlert").click(closeError);
   }).catch(err => console.error);
 
-  $("#closeAlert").click(closeError)
+  canvasCollection = db.collection('canvases');
+
 });
 
 function closeError() {
