@@ -10,15 +10,16 @@ var _id = new stitch.BSON.ObjectId(getUrlVars()["id"]);
 
 var stream1;
 async function watcher() {
-  canvasCollection.find({_id}).toArray().then((doc) => {
-    allMoves = doc[0].moves != null ? doc[0].moves : {};
-    drawMoves();
+  let c = this;
+  canvasCollection.find({_id}).toArray().then(doc => {
+    c.allMoves = doc[0].moves != null ? doc[0].moves : {};
+    c.drawMoves();
   });
 
   stream1 = await canvasCollection.watch([_id]);
-  stream1.onNext((event) => {
-     allMoves = event.fullDocument.moves != null ? event.fullDocument.moves : {};
-     drawMoves();
+  stream1.onNext(e => {
+     c.allMoves = e.fullDocument.moves != null ? e.fullDocument.moves : {};
+     c.drawMoves();
    });
 }
 
@@ -27,18 +28,20 @@ function clearMovesDB() {
 }
 
 function redoDB(move) {
+  let c = this;
   let obj = {};
   obj["moves."+move.id] = move;
   canvasCollection.updateOne({_id}, {$set: obj}).then((doc) => {
-    drawMoves();
+    c.drawMoves();
   }).catch(err => console.error);
 }
 
 function undoDB(move) {
+  let c = this;
   let obj = {};
   obj["moves."+move.id] = 0;
   canvasCollection.updateOne({_id}, {$unset: obj}).then((doc) => {
-    drawMoves();
+    c.drawMoves();
   }).catch(err => console.error);
 }
 
@@ -53,43 +56,20 @@ function upToDate(obj1, obj2) {
 
 var ttime = 1;
 function writeToDb() {
-  if (Object.keys(newChanges).length != 0) {
+  if (Object.keys(this.newChanges).length != 0) {
     let moves = {};
-    for (let m in newChanges) {
-      moves["moves."+m] = newChanges[m];
+    for (let m in this.newChanges) {
+      moves["moves."+m] = this.newChanges[m];
     }
-
+    let c = this;
     canvasCollection.updateOne({_id}, {$set: moves}).then(() => {
-      if (upToDate(newChanges, allMoves)) {
-        newChanges = {};
+      console.log(upToDate(c.newChanges, c.allMoves))
+      if (upToDate(c.newChanges, c.allMoves)) {
+          c.newChanges = {};
       }
-      setTimeout(writeToDb, ttime);
+      setTimeout(writeToDb.bind(c), ttime);
     }).catch(err => console.error);
   } else {
-    setTimeout(writeToDb, ttime);
+    setTimeout(writeToDb.bind(this), ttime);
   }
-}
-
-function deepEqual (x, y) {
-  if (x === y) {
-    return true;
-  }
-  else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
-    if (Object.keys(x).length != Object.keys(y).length)
-      return false;
-
-    for (var prop in x) {
-      if (y.hasOwnProperty(prop))
-      {
-        if (! deepEqual(x[prop], y[prop]))
-          return false;
-      }
-      else
-        return false;
-    }
-
-    return true;
-  }
-  else
-    return false;
 }

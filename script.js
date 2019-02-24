@@ -4,11 +4,11 @@ const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-at
 
 var canvasCollection;
 
-$(document).ready(function() {
+document.addEventListener("DOMContentLoaded", () => {
   client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(doc => {
-    $("#newDrawing").click(createDrawing);
-    $("#submitCode").click(() => {
-      var code = $("#canvasId").val();
+    document.getElementById("newDrawing").onclick = createDrawing;
+    document.getElementById("submitCode").onclick = () => {
+      var code = document.getElementById("canvasId").value;
       if (code.length == 24) {
         canvasCollection.find({_id: new stitch.BSON.ObjectId(code)}).toArray().then((result) => {
           if (result.length == 0) {
@@ -20,15 +20,19 @@ $(document).ready(function() {
       } else {
         findError(code)
       }
-    });
+    };
 
     canvasCollection.find({}).toArray().then((result) => {
       for (let i of result) {
-        $("#canvasList").append($(`<a href="/draw?id=${i._id}" class="list-group-item list-group-item-action">${i._id}</a>"`))
+        let link = document.createElement("a");
+        link.classList.add("list-group-item", "list-group-item-action");
+        link.href = `/draw?id=${i._id}`;
+        link.innerHTML = i._id;
+        document.getElementById("canvasList").appendChild(link);
       }
     }).catch(err => console.error);
 
-    $("#closeAlert").click(closeError);
+    document.getElementById("closeAlert").onclick = closeError;
   }).catch(err => console.error);
 
   canvasCollection = db.collection('canvases');
@@ -36,12 +40,11 @@ $(document).ready(function() {
 });
 
 function closeError() {
-  $("#errAlert").removeClass("show");
+  document.getElementById("errAlert").classList.remove("show");
 }
 
 function findError(code) {
-  console.log("test")
-  $("#errAlert").addClass("show");
+  document.getElementById("errAlert").classList.add("show");
   setTimeout(closeError, 5000)
 
 }
@@ -50,5 +53,4 @@ function createDrawing() {
   canvasCollection.insertOne({userid: client.auth.user.id}).then((result) => {
     window.location = "draw?id="+result.insertedId;
   }).catch(err => console.error)
-
 }

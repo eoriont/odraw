@@ -1,19 +1,21 @@
 var navState = false;
 
-$(document).ready(() => {
-  $("#close").click(closeNav);
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("close").onclick = () => closeNav();
 
-  $("#brushSize").on('input', () => {
-    size = $("#brushSize").val();
-  })
+  document.getElementById('brushSize').oninput = () => {
+    ocanvas.brushSize = document.getElementById('brushSize').value;
+  };
 
-  $("#col").val("#FFFFFF");
-  $("#col").change(() => {
-    var c = $("#col").val();
-    color = c;
-    $("#test_wrapper").css('background-color', c);
-  });
+  document.getElementById("col").value = "#FFFFFF"
+  document.getElementById("col").oninput = e => {
+    var c = document.getElementById("col").value;
+    ocanvas.color = c;
+    document.getElementById("test_wrapper").style['background-color'] = c;
+  };
 });
+
+
 
 function toggleNav() {
   if (navState) closeNav();
@@ -22,10 +24,10 @@ function toggleNav() {
 
 function openNav() {
   navState = true;
-  $("#sidenav").width(250);
+  document.getElementById("sidenav").style.width = "250px";
 }
 
 function closeNav() {
   navState = false;
-  $("#sidenav").width(0);
+  document.getElementById("sidenav").style.width = "0px";
 }

@@ -1,177 +1,182 @@
-var size = 2;
-var color = "#FFFFFF"
+class ODraw {
+  constructor() {
+    this.brushSize = 2;
+    this.color = "#FFFFFF"
 
-var mouseDown = false;
-var mousePos = {
-  lastX: 0,
-  lastY: 0,
-  x: 0,
-  y: 0
-};
+    this.mouseDown = false;
+    this.mousePos = new Point(0, 0);
+    this.lastMousePos = new Point(0, 0);
 
-var c = $("<canvas></canvas>");
-var ctx = $(c)[0].getContext("2d");
+    this.canvas = document.createElement("canvas");
+    this.ctx = this.canvas.getContext("2d");
 
-var userMoves = {};
-var moveIdsList = [];
-var currentMove = {};
+    this.userMoves = {};
+    this.moveIdsList = [];
+    this.currentMove = {};
 
-var allMoves = {};
+    this.allMoves = {};
 
-var undoMoves = {};
-var undoMoveIdsList = [];
+    this.undoMoves = {};
+    this.undoMoveIdsList = [];
 
-var canvasId = getUrlVars()["id"];
+    this.canvasId = getUrlVars()["id"];
 
-var newChanges = {};
+    this.newChanges = {};
 
-$(document).ready(() => {
-  $(c).attr('width', $(window).width());
-  $(c).attr('height', $(window).height());
-  $("#main").append($(c))
-  $(document).attr("title", "ODraw: " + canvasId);
-  watcher();
-  writeToDb();
-});
-
-class Point {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
+    document.addEventListener("DOMContentLoaded", this.documentReady.bind(this));
   }
-}
 
-function anyMove() {
-  drawMoves();
-  if(mouseDown) {
-    var move = currentMove;
-    if (Object.keys(currentMove).length == 0) {
-      move = {
-        mode: "line",
-        color,
-        size,
-        id: genId(),
-        userId,
-        data: [
-          new Point(mousePos.lastX, mousePos.lastY),
-          new Point(mousePos.x, mousePos.y)
-        ]
+  anyMove() {
+    this.drawMoves();
+    if (this.mouseDown) {
+      if (Object.keys(this.currentMove).length == 0) {
+        let id = genId();
+        this.moveIdsList.push(id);
+        this.currentMove = {
+          mode: "line",
+          color: this.color,
+          brushSize: this.brushSize,
+          id,
+          userId: userId,
+          data: [this.lastMousePos, this.mousePos]
+        }
+      } else {
+        this.currentMove.data.push(this.mousePos);
       }
-    } else {
-      move.data.push(new Point(mousePos.x, mousePos.y));
+      this.writeMoves(this.currentMove);
     }
-    currentMove = move;
-    writeMoves(move);
   }
-}
 
-function drawMoves() {
-  ctx.clearRect(0, 0, $(window).width(), $(window).height());
-  Object.values(allMoves).concat(Object.values(userMoves)).forEach((move) => {
-    if (move.mode == "line") {
-      drawLine(move);
+  drawMoves() {
+    this.ctx.clearRect(0, 0, windowDimensions().x, windowDimensions().y);
+    Object.values(this.allMoves).concat(Object.values(this.userMoves)).forEach(move => {
+      if (move.mode == "line") {
+        this.drawLine(move);
+      }
+    });
+  }
+
+  drawLine(line) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(line.data[0].x, line.data[0].y);
+    this.ctx.lineWidth = line.brushSize;
+    this.ctx.strokeStyle = line.color;
+    this.ctx.lineJoin = this.ctx.lineCap = 'round';
+    this.ctx.globalCompositeOperation = "source-over";
+    for (let i = 1; i < line.data.length; i++) {
+      let l = line.data[i];
+      this.ctx.lineTo(l.x, l.y);
     }
-  });
-}
-
-function drawLine(line) {
-  ctx.beginPath();
-  ctx.moveTo(line.data[0].x, line.data[0].y);
-  ctx.lineWidth = line.size;
-  ctx.strokeStyle = line.color;
-  ctx.lineJoin = ctx.lineCap = 'round';
-  ctx.globalCompositeOperation = "source-over";
-  for (let i = 1; i < line.data.length; i++) {
-    let l = line.data[i];
-    ctx.lineTo(l.x, l.y);
-  }
-  ctx.stroke();
-}
-
-function writeMoves(move) {
-  userMoves[move.id] = move;
-  newChanges[move.id] = move
-}
-
-function undo() {
-  if (moveIdsList.length == 0) return;
-
-  var undoMoveId = moveIdsList.pop();
-  var undoMove = userMoves[undoMoveId];
-
-  undoMoveIdsList.push(undoMoveId);
-  undoMoves[undoMoveId] = undoMove;
-
-  delete userMoves[undoMoveId];
-
-  undoDB(undoMove);
-
-  drawMoves();
-}
-
-function redo() {
-  if (undoMoveIdsList.length == 0) return;
-
-  var oldMoveId = undoMoveIdsList.pop();
-  var oldMove = undoMoves[oldMoveId];
-
-  moveIdsList.push(oldMoveId);
-  userMoves[oldMoveId] = oldMove;
-
-  delete undoMoves[oldMoveId];
-
-  redoDB(oldMove);
-
-  drawMoves()
-}
-
-$(c).mouseup(() => {
-  mouseDown = false;
-  currentMove = {};
-});
-
-$(document).keydown((e) => {
-  var keynum = e.keyCode;
-  var key = String.fromCharCode(keynum);
-  if (e.metaKey && key != "R") {
-    e.preventDefault();
+    this.ctx.stroke();
   }
 
-  if (key == "Z" && e.metaKey) {
-    undo();
-  } else if (key == "Y" && e.metaKey) {
-    redo();
+  writeMoves(move) {
+    this.userMoves[move.id] = move;
+    this.newChanges[move.id] = move
   }
 
-  if(key == "H") {
-    toggleNav();
+  undo() {
+    if (this.moveIdsList.length == 0) return;
+
+    let undoMoveId = this.moveIdsList.pop();
+    let undoMove = this.userMoves[undoMoveId];
+
+    this.undoMoveIdsList.push(undoMoveId);
+    this.undoMoves[undoMoveId] = undoMove;
+
+    delete this.userMoves[undoMoveId];
+
+    undoDB.call(this, undoMove);
+
+    this.drawMoves();
   }
-  if(key == "C") {
-    userMoves = {};
-    moveIdsList = [];
-    clearMovesDB();
-    ctx.clearRect(0, 0, $(window).width(), $(window).height());
+
+  redo() {
+    if (this.undoMoveIdsList.length == 0) return;
+
+    var oldMoveId = this.undoMoveIdsList.pop();
+    var oldMove = this.undoMoves[oldMoveId];
+
+    this.moveIdsList.push(oldMoveId);
+    this.userMoves[oldMoveId] = oldMove;
+
+    delete this.undoMoves[oldMoveId];
+
+    redoDB.call(this, oldMove);
+
+    this.drawMoves()
   }
-});
 
-$(c).mousemove((e) => {
-  var rect = $(c)[0].getBoundingClientRect();
-  mousePos = {
-    lastX: mousePos.x,
-    lastY: mousePos.y,
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
-  };
-  anyMove();
-});
+  documentReady() {
+    this.canvas.width = windowDimensions().x;
+    this.canvas.height = windowDimensions().y;
+    document.getElementById("main").appendChild(this.canvas)
+    document.title = "ODraw: " + this.canvasId;
+    this.addEvents();
+    watcher.call(this);
+    writeToDb.call(this);
+  }
 
-$(c).mousedown(() => {
-  mouseDown = true;
-});
+  addEvents() {
+    this.canvas.onmouseup = this.mouseUp.bind(this);
+    document.onkeydown = this.keyDown.bind(this);
+    this.canvas.onmousemove = this.mouseMove.bind(this);
+    this.canvas.onmousedown = this.mouseDownF.bind(this);
+    this.canvas.onwheel = this.mouseWheel.bind(this);
+    window.onresize = this.windowResize.bind(this);
+  }
 
-$(c).mousewheel((e) => {
-  if (e.deltaY >= 1) size+=.1;
-  else if (e.deltaY <= -1) size-=.1;
-  ctx.lineWidth = size;
-  $("#brushSize").html(size);
-});
+  mouseUp() {
+    this.mouseDown = false;
+    this.currentMove = {};
+  }
+
+  keyDown(e) {
+    let key = e.code
+    if (e.metaKey && key != "KeyR") {
+      e.preventDefault();
+    }
+
+    if (key == "KeyZ" && e.metaKey) {
+      this.undo();
+    } else if (key == "KeyY" && e.metaKey) {
+      this.redo();
+    }
+
+    if(key == "KeyH") {
+      toggleNav();
+    }
+
+    if(key == "KeyC") {
+      this.userMoves = {};
+      this.moveIdsList = [];
+      clearMovesDB();
+      this.ctx.clearRect(0, 0, windowDimensions().x, windowDimensions().y);
+    }
+  }
+
+  mouseMove(e) {
+    var rect = this.canvas.getBoundingClientRect();
+    this.lastMousePos = this.mousePos;
+    this.mousePos = new Point(e.clientX - rect.left, e.clientY - rect.top);
+    this.anyMove();
+  }
+
+  mouseDownF() {
+    this.mouseDown = true;
+  }
+
+  mouseWheel(e) {
+    if (e.deltaY >= 1) this.brushSize+=.1;
+    else if (e.deltaY <= -1) this.brushSize-=.1;
+    this.ctx.lineWidth = this.brushSize;
+    document.getElementById("brushSize").value = this.brushSize;
+  }
+
+  windowResize() {
+    this.canvas.width = windowDimensions().x;
+    this.canvas.height = windowDimensions().y;
+  }
+}
+
+var ocanvas = new ODraw();
