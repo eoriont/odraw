@@ -6,6 +6,7 @@ class ODraw {
     this.mouseDown = false;
     this.mousePos = new Point(0, 0);
     this.lastMousePos = new Point(0, 0);
+    this.lastMouseDown = new Point(0, 0);
 
     this.canvas = document.createElement("canvas");
     this.ctx = this.canvas.getContext("2d");
@@ -28,12 +29,44 @@ class ODraw {
 
   anyMove() {
     this.drawMoves();
+
+    if (toolSelected == "pencil") {
+      this.pencilMove();
+    }
+
+    if (toolSelected == "line") {
+      this.lineMove();
+    }
+    
+  }
+
+  lineMove() {
     if (this.mouseDown) {
       if (Object.keys(this.currentMove).length == 0) {
         let id = genId();
         this.moveIdsList.push(id);
         this.currentMove = {
           mode: "line",
+          color: this.color,
+          brushSize: this.brushSize,
+          id,
+          userId,
+          data: [this.lastMouseDown, this.mousePos]
+        }
+      } else {
+        this.currentMove.data[1] = this.mousePos;
+      }
+      this.writeMoves(this.currentMove);
+    }
+  }
+
+  pencilMove() {
+    if (this.mouseDown) {
+      if (Object.keys(this.currentMove).length == 0) {
+        let id = genId();
+        this.moveIdsList.push(id);
+        this.currentMove = {
+          mode: "pencil",
           color: this.color,
           brushSize: this.brushSize,
           id,
@@ -50,7 +83,9 @@ class ODraw {
   drawMoves() {
     this.ctx.clearRect(0, 0, windowDimensions().x, windowDimensions().y);
     Object.values(this.allMoves).concat(Object.values(this.userMoves)).forEach(move => {
-      if (move.mode == "line") {
+      if (move.mode == "pencil") {
+        this.drawLine(move);
+      } else if (move.mode == "line") {
         this.drawLine(move);
       }
     });
@@ -67,6 +102,17 @@ class ODraw {
       let l = line.data[i];
       this.ctx.lineTo(l.x, l.y);
     }
+    this.ctx.stroke();
+  }
+
+  drawSingleLine(line) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(line.data[0].x, line.data[0].y);
+    this.ctx.lineWidth = line.brushSize;
+    this.ctx.strokeStyle = line.color;
+    this.ctx.lineJoin = this.ctx.lineCap = 'round';
+    this.ctx.globalCompositeOperation = "source-over";
+    this.ctx.lineTo(line.data[1], line.data[1]);
     this.ctx.stroke();
   }
 
@@ -133,13 +179,13 @@ class ODraw {
 
   keyDown(e) {
     let key = e.code
-    if (e.metaKey && key != "KeyR") {
+    let metaKey = e.ctrlKey || e.metaKey;
+    if (metaKey && key != "KeyR") {
       e.preventDefault();
     }
-
-    if (key == "KeyZ" && e.metaKey) {
+    if (key == "KeyZ" && metaKey) {
       this.undo();
-    } else if (key == "KeyY" && e.metaKey) {
+    } else if (key == "KeyY" && metaKey) {
       this.redo();
     }
 
@@ -164,6 +210,8 @@ class ODraw {
 
   mouseDownF() {
     this.mouseDown = true;
+    this.lastMouseDown = this.mousePos;
+    
   }
 
   mouseWheel(e) {

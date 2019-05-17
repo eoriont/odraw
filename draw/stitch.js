@@ -63,7 +63,6 @@ function writeToDb() {
     }
     let c = this;
     canvasCollection.updateOne({_id}, {$set: moves}).then(() => {
-      console.log(upToDate(c.newChanges, c.allMoves))
       if (upToDate(c.newChanges, c.allMoves)) {
           c.newChanges = {};
       }

@@ -10,11 +10,11 @@ canvas {
 
 .sidenav {
   height: 100%;
-  width: 0;
+  width: 250px;
   position: fixed;
   z-index: 1;
   top: 0;
-  left: 0;
+  left: -250px;
   background-color: #111;
   overflow-x: hidden;
   padding-top: 60px;
@@ -117,4 +117,23 @@ html {
   margin: 0;
   border: 5px solid white;
   border-radius: 5px;
+}
+
+.tools {
+  width: 100%;
+}
+
+.tools img {
+  background-color: white;
+  width: 85px;
+  padding: 5px;
+  float: left;
+}
+
+img {
+  border: 4px solid gray;
+}
+
+.selected {
+  border: 4px solid lightseagreen;
 }
