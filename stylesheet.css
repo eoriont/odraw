@@ -1,8 +1,24 @@
 .message {
-    position: fixed;
-    top: 0;
+  position: fixed;
+  top: 0;
 }
 .inner-message {
-    margin: 0 auto;
-    padding: 20px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.errstatus {
+  opacity: 0;
+  display: none;
+
+  -webkit-transition: opacity .2s ease-in;
+      -moz-transition: opacity .2s ease-in;
+      -ms-transition: opacity .2s ease-in;
+        -o-transition: opacity .2s ease-in;
+          transition: opacity .2s ease-in;
+}
+
+.showErr {
+  opacity: 1;
+  display: block;
 }

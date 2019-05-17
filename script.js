@@ -40,13 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function closeError() {
-  document.getElementById("errAlert").classList.remove("show");
+  document.getElementById("errstatus").classList.remove("showErr");
 }
 
 function findError(code) {
-  document.getElementById("errAlert").classList.add("show");
+  document.getElementById("errstatus").classList.add("showErr");
   setTimeout(closeError, 5000)
-
 }
 
 function createDrawing() {
