@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let i of result) {
         let link = document.createElement("a");
         link.classList.add("list-group-item", "list-group-item-action");
-        link.href = `/draw?id=${i._id}`;
+        link.href = `draw?id=${i._id}`;
         link.innerHTML = i._id;
         document.getElementById("canvasList").appendChild(link);
       }
