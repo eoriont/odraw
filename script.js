@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
             findError(code);
             return;
           }
-          window.location = `/draw?id=${result[0]._id}`;
+          window.location = `draw/?id=${result[0]._id}`;
         }).catch(err => console.error);
       } else {
         findError(code)
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let i of result) {
         let link = document.createElement("a");
         link.classList.add("list-group-item", "list-group-item-action");
-        link.href = `draw?id=${i._id}`;
+        link.href = `draw/?id=${i._id}`;
         link.innerHTML = i._id;
         document.getElementById("canvasList").appendChild(link);
       }
@@ -50,6 +50,6 @@ function findError(code) {
 
 function createDrawing() {
   canvasCollection.insertOne({userid: client.auth.user.id}).then((result) => {
-    window.location = "draw?id="+result.insertedId;
+    window.location = "draw/?id="+result.insertedId;
   }).catch(err => console.error)
 }

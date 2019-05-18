@@ -1,11 +1,11 @@
 canvas {
   border: 1px solid #d3d3d3;
-  background-color: black;
   padding: 0px;
   margin: 0px;
   position: absolute;
   left: -2px;
   top: -2px;
+  cursor: crosshair;
 }
 
 .sidenav {

@@ -37,6 +37,14 @@ class ODraw {
     if (toolSelected == "line") {
       this.lineMove();
     }
+
+    if (toolSelected == "eraser") {
+      this.eraserMove();
+    }
+
+    if (toolSelected == "colorpick") {
+      this.colorPick();
+    }
     
   }
 
@@ -51,6 +59,7 @@ class ODraw {
           brushSize: this.brushSize,
           id,
           userId,
+          sessionId,
           data: [this.lastMouseDown, this.mousePos]
         }
       } else {
@@ -70,7 +79,8 @@ class ODraw {
           color: this.color,
           brushSize: this.brushSize,
           id,
-          userId: userId,
+          userId,
+          sessionId,
           data: [this.lastMousePos, this.mousePos]
         }
       } else {
@@ -80,15 +90,48 @@ class ODraw {
     }
   }
 
+  eraserMove() {
+    if (this.mouseDown) {
+      if (Object.keys(this.currentMove).length == 0) {
+        let id = genId();
+        this.moveIdsList.push(id);
+        this.currentMove = {
+          mode: "pencil",
+          color: this.canvas.style["background-color"],
+          brushSize: this.brushSize,
+          id,
+          userId,
+          sessionId,
+          data: [this.lastMousePos, this.mousePos]
+        }
+      } else {
+        this.currentMove.data.push(this.mousePos);
+      }
+      this.writeMoves(this.currentMove);
+    }
+  }
+
+  colorPick() {
+    if (this.mouseDown) {
+      var pixelData = this.ctx.getImageData(this.mousePos.x, this.mousePos.y, 1, 1).data;
+      this.color = RGBToHex(pixelData[0], pixelData[1], pixelData[2]);
+      console.log(this.color)
+      updateColor(this.color);
+    }
+  }
+
   drawMoves() {
     this.ctx.clearRect(0, 0, windowDimensions().x, windowDimensions().y);
-    Object.values(this.allMoves).concat(Object.values(this.userMoves)).forEach(move => {
-      if (move.mode == "pencil") {
-        this.drawLine(move);
-      } else if (move.mode == "line") {
-        this.drawLine(move);
-      }
-    });
+    Object.values(this.allMoves)
+      .filter(i => i.sessionId != sessionId)
+      .concat(Object.values(this.userMoves))
+      .forEach(move => {
+        if (move.mode == "pencil") {
+          this.drawLine(move);
+        } else if (move.mode == "line") {
+          this.drawLine(move);
+        }
+      });
   }
 
   drawLine(line) {
@@ -102,17 +145,6 @@ class ODraw {
       let l = line.data[i];
       this.ctx.lineTo(l.x, l.y);
     }
-    this.ctx.stroke();
-  }
-
-  drawSingleLine(line) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(line.data[0].x, line.data[0].y);
-    this.ctx.lineWidth = line.brushSize;
-    this.ctx.strokeStyle = line.color;
-    this.ctx.lineJoin = this.ctx.lineCap = 'round';
-    this.ctx.globalCompositeOperation = "source-over";
-    this.ctx.lineTo(line.data[1], line.data[1]);
     this.ctx.stroke();
   }
 
@@ -156,6 +188,7 @@ class ODraw {
   documentReady() {
     this.canvas.width = windowDimensions().x;
     this.canvas.height = windowDimensions().y;
+    this.canvas.style["background-color"] = "#000000"
     document.getElementById("main").appendChild(this.canvas)
     document.title = "ODraw: " + this.canvasId;
     this.addEvents();
@@ -211,7 +244,7 @@ class ODraw {
   mouseDownF() {
     this.mouseDown = true;
     this.lastMouseDown = this.mousePos;
-    
+    this.anyMove();
   }
 
   mouseWheel(e) {

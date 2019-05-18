@@ -6,6 +6,7 @@ client.auth.loginWithCredential(new stitch.AnonymousCredential()).catch(err => c
 
 var canvasCollection = db.collection('canvases');
 var userId = client.auth.user.id;
+var sessionId = genId();
 var _id = new stitch.BSON.ObjectId(getUrlVars()["id"]);
 
 var stream1;

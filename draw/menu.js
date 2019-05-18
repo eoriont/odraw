@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("col").oninput = e => {
     var c = document.getElementById("col").value;
     ocanvas.color = c;
-    document.getElementById("test_wrapper").style['background-color'] = c;
+    updateColor(c);
   };
 
   toolElm = document.getElementById("pencil")
@@ -27,6 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   })
 });
+
+function updateColor(c) {
+  document.getElementById("test_wrapper").style['background-color'] = c;
+}
 
 function toggleNav() {
   if (navState) closeNav();
