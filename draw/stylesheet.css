@@ -19,6 +19,12 @@ canvas {
   overflow-x: hidden;
   padding-top: 60px;
   transition: 0.5s;
+
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
 }
 
 .sidenav a, span {
@@ -132,6 +138,8 @@ html {
 
 img {
   border: 4px solid gray;
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 .selected {

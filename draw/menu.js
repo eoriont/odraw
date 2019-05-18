@@ -1,6 +1,5 @@
 var navState = false;
 var toolSelected = "pencil";
-var toolElm = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("close").onclick = () => closeNav();
@@ -16,15 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
     updateColor(c);
   };
 
-  toolElm = document.getElementById("pencil")
   document.getElementById("tools").addEventListener("click", (e) => {
     var child = e.target;
     var parent = child.parentNode;
+    if (parent.id == toolSelected || parent.parentNode.id != "tools") return;
     parent.children[0].classList.add("selected");
-    toolElm.children[0].classList.remove("selected")
-    toolElm = parent;
+    document.getElementById(toolSelected).children[0].classList.remove("selected")
     toolSelected = parent.id;
-
   })
 });
 
