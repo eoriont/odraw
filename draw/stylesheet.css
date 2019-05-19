@@ -1,11 +1,13 @@
 canvas {
-  border: 1px solid #d3d3d3;
+  background-color: black;
   padding: 0px;
   margin: 0px;
-  position: absolute;
-  left: -2px;
-  top: -2px;
+  position: fixed;
   cursor: crosshair;
+}
+
+body {
+  margin: 0px;
 }
 
 .sidenav {
@@ -50,7 +52,6 @@ canvas {
 
 #main {
   transition: margin-left .5s;
-  padding: 20px;
 }
 
 @media screen and (max-height: 450px) {

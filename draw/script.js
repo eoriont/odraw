@@ -2,6 +2,7 @@ class ODraw {
   constructor() {
     this.brushSize = 2;
     this.color = "#FFFFFF"
+    this.backgroundColor = "#000000"
 
     this.mouseDown = false;
     this.mousePos = new Point(0, 0);
@@ -97,7 +98,7 @@ class ODraw {
         this.moveIdsList.push(id);
         this.currentMove = {
           mode: "pencil",
-          color: this.canvas.style["background-color"],
+          color: this.backgroundColor,
           brushSize: this.brushSize,
           id,
           userId,
@@ -115,7 +116,6 @@ class ODraw {
     if (this.mouseDown) {
       var pixelData = this.ctx.getImageData(this.mousePos.x, this.mousePos.y, 1, 1).data;
       this.color = RGBToHex(pixelData[0], pixelData[1], pixelData[2]);
-      console.log(this.color)
       updateColor(this.color);
     }
   }
@@ -188,7 +188,6 @@ class ODraw {
   documentReady() {
     this.canvas.width = windowDimensions().x;
     this.canvas.height = windowDimensions().y;
-    this.canvas.style["background-color"] = "#000000"
     document.getElementById("main").appendChild(this.canvas)
     document.title = "ODraw: " + this.canvasId;
     this.addEvents();
