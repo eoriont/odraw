@@ -1,5 +1,6 @@
 var navState = false;
 var toolSelected = "pencil";
+var fillShape = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("close").onclick = () => closeNav();
@@ -22,6 +23,15 @@ document.addEventListener("DOMContentLoaded", () => {
     parent.children[0].classList.add("selected");
     document.getElementById(toolSelected).children[0].classList.remove("selected")
     toolSelected = parent.id;
+  })
+  var fillshapebutton = document.getElementById("fillshape").children[0];
+  fillshapebutton.addEventListener("click", (e) => {
+    fillShape = !fillShape;
+    if (fillShape) {
+      fillshapebutton.classList.add("redselected");
+    } else {
+      fillshapebutton.classList.remove("redselected")
+    }
   })
 });
 

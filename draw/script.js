@@ -33,20 +33,60 @@ class ODraw {
 
     if (toolSelected == "pencil") {
       this.pencilMove();
-    }
-
-    if (toolSelected == "line") {
+    } else if (toolSelected == "line") {
       this.lineMove();
-    }
-
-    if (toolSelected == "eraser") {
+    } else if (toolSelected == "eraser") {
       this.eraserMove();
-    }
-
-    if (toolSelected == "colorpick") {
+    } else if (toolSelected == "colorpick") {
       this.colorPick();
+    } else if (toolSelected == "rectangle") {
+      this.rectMove();
+    } else if (toolSelected == "ellipse") {
+      this.ellipseMove();
     }
     
+  }
+
+  ellipseMove() {
+    if (this.mouseDown) {
+      if (Object.keys(this.currentMove).length == 0) {
+        let id = genId();
+        this.moveIdsList.push(id);
+        this.currentMove = {
+          mode: "ellipse",
+          color: this.color,
+          brushSize: this.brushSize,
+          id,
+          userId,
+          sessionId,
+          data: [this.lastMouseDown, this.mousePos, fillShape]
+        }
+      } else {
+        this.currentMove.data[1] = this.mousePos;
+      }
+      this.writeMoves(this.currentMove);
+    }
+  }
+
+  rectMove() {
+    if (this.mouseDown) {
+      if (Object.keys(this.currentMove).length == 0) {
+        let id = genId();
+        this.moveIdsList.push(id);
+        this.currentMove = {
+          mode: "rect",
+          color: this.color,
+          brushSize: this.brushSize,
+          id,
+          userId,
+          sessionId,
+          data: [this.lastMouseDown, this.mousePos, fillShape]
+        }
+      } else {
+        this.currentMove.data[1] = this.mousePos;
+      }
+      this.writeMoves(this.currentMove);
+    }
   }
 
   lineMove() {
@@ -126,10 +166,19 @@ class ODraw {
       .filter(i => i.sessionId != sessionId)
       .concat(Object.values(this.userMoves))
       .forEach(move => {
-        if (move.mode == "pencil") {
-          this.drawLine(move);
-        } else if (move.mode == "line") {
-          this.drawLine(move);
+        switch (move.mode) {
+          case "pencil":
+            this.drawLine(move);
+            break;
+          case "line":
+            this.drawLine(move);
+            break;
+          case "rect":
+            this.drawRect(move);
+            break;
+          case "ellipse":
+            this.drawEllipse(move);
+            break;
         }
       });
   }
@@ -137,15 +186,56 @@ class ODraw {
   drawLine(line) {
     this.ctx.beginPath();
     this.ctx.moveTo(line.data[0].x, line.data[0].y);
-    this.ctx.lineWidth = line.brushSize;
-    this.ctx.strokeStyle = line.color;
-    this.ctx.lineJoin = this.ctx.lineCap = 'round';
-    this.ctx.globalCompositeOperation = "source-over";
+    this.styleBrush(line);
     for (let i = 1; i < line.data.length; i++) {
       let l = line.data[i];
       this.ctx.lineTo(l.x, l.y);
     }
     this.ctx.stroke();
+  }
+
+  drawRect(rect) {
+    this.styleBrush(rect);
+    if (rect.data[2]) {
+      this.ctx.fillRect(rect.data[0].x, rect.data[0].y, rect.data[1].x-rect.data[0].x, rect.data[1].y-rect.data[0].y)
+    } else {
+      this.ctx.rect(rect.data[0].x, rect.data[0].y, rect.data[1].x-rect.data[0].x, rect.data[1].y-rect.data[0].y)
+    }
+    
+    this.ctx.stroke();
+  }
+
+  drawEllipse(ell) {
+    this.styleBrush(ell);
+    this.ctx.save();
+    this.ctx.beginPath();
+
+    let cx = ell.data[0].x;
+    let cy = ell.data[0].y;
+    let rx = (ell.data[1].x-cx)/2;
+    let ry = (ell.data[1].y-cy)/2;
+
+    this.ctx.translate(cx, cy);
+    this.ctx.scale(rx, ry);
+
+    
+    this.ctx.arc(1, 1, 1, 0, 2 * Math.PI, false);
+
+    this.ctx.restore();
+    
+    if (ell.data[2]) {
+      this.ctx.fill();
+    } else {
+      this.ctx.stroke();
+    }
+  }
+
+  styleBrush(move) {
+    this.ctx.lineWidth = move.brushSize;
+    this.ctx.strokeStyle = move.color;
+    this.ctx.fillStyle = move.color;
+    this.ctx.lineJoin = this.ctx.lineCap = 'round';
+    this.ctx.globalCompositeOperation = "source-over";
   }
 
   writeMoves(move) {

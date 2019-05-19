@@ -130,19 +130,26 @@ html {
   width: 100%;
 }
 
-.tools img {
+.tool img {
   background-color: white;
   width: 85px;
   padding: 5px;
+}
+
+.tools img {
   float: left;
 }
 
 img {
-  border: 4px solid gray;
+  border: 5px solid gray;
   -webkit-user-drag: none;
   user-drag: none;
 }
 
 .selected {
-  border: 4px solid lightseagreen;
+  border: 5px solid lightseagreen;
+}
+
+.redselected {
+  border: 5px solid red;
 }
